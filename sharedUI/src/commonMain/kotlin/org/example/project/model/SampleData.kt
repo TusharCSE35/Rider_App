@@ -45,6 +45,18 @@ object SampleData {
         DayEarning("Fri", 1890, 13)
     )
 
+    // This month = 23 earlier days + current week (last 7 days), so week totals stay consistent.
+    val month = listOf(
+        DayEarning("Sep 13", 1120, 8), DayEarning("Sep 14", 1350, 9), DayEarning("Sep 15", 890, 6),
+        DayEarning("Sep 16", 1640, 12), DayEarning("Sep 17", 1020, 7), DayEarning("Sep 18", 1490, 10),
+        DayEarning("Sep 19", 870, 6), DayEarning("Sep 20", 1310, 9), DayEarning("Sep 21", 990, 7),
+        DayEarning("Sep 22", 1580, 11), DayEarning("Sep 23", 1090, 8), DayEarning("Sep 24", 1420, 10),
+        DayEarning("Sep 25", 940, 6), DayEarning("Sep 26", 1710, 12), DayEarning("Sep 27", 1180, 8),
+        DayEarning("Sep 28", 1290, 9), DayEarning("Sep 29", 1050, 7), DayEarning("Sep 30", 1470, 10),
+        DayEarning("Oct 1", 920, 6), DayEarning("Oct 2", 1610, 11), DayEarning("Oct 3", 1140, 8),
+        DayEarning("Oct 4", 1380, 9), DayEarning("Oct 5", 990, 7)
+    ) + week
+
     const val walletBalance = 3450
 
     val cashSummary = CashSummary(
