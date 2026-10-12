@@ -299,14 +299,12 @@ private fun HomeTab(
                 Text("Hello, Rider \uD83D\uDC4B", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text("Ready to deliver today?", color = GreyText, fontSize = 13.sp)
             }
-            Box(modifier = Modifier.size(48.dp)) {
+            Box(modifier = Modifier.size(44.dp)) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .size(44.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, CardBorder, CircleShape)
                         .clickable { onNotificationClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -314,24 +312,24 @@ private fun HomeTab(
                         imageVector = Icons.Filled.Notifications,
                         contentDescription = "Notifications",
                         tint = DarkText,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
                 if (unreadCount > 0) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                            .offset(x = (-5).dp, y = 4.dp)
+                            .size(16.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
-                            .padding(horizontal = 4.dp),
+                            .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            if (unreadCount > 9) "9+" else unreadCount.toString(),
+                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
                             color = Color.White,
-                            fontSize = 10.sp,
+                            fontSize = if (unreadCount > 9) 8.sp else 10.sp,
+                            lineHeight = if (unreadCount > 9) 8.sp else 10.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
