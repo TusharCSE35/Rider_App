@@ -15,9 +15,13 @@ import org.example.project.theme.*
 
 @Composable
 fun RiderShortcuts(onOpen: (RiderDestination) -> Unit) {
+    val items = RiderDestination.entries.filter {
+        it != RiderDestination.EDIT_PROFILE && it != RiderDestination.DOCUMENTS
+    }
+
     ContentCard {
         Column(Modifier.fillMaxWidth()) {
-            RiderDestination.entries.forEachIndexed { i, d ->
+            items.forEachIndexed { i, d ->
                 if (i > 0) HorizontalDivider()
                 Row(
                     Modifier.fillMaxWidth().clickable { onOpen(d) }.padding(16.dp),
