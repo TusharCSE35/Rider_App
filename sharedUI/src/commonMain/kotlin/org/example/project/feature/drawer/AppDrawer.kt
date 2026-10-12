@@ -122,13 +122,21 @@ private fun DrawerItem(label: String, emoji: String, badge: String? = null, onCl
         icon = { Text(emoji, fontSize = 18.sp) },
         badge = badge?.let { b ->
             {
-                Text(
-                    b, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                Box(
                     modifier = Modifier
+                        .size(22.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 7.dp, vertical = 2.dp)
-                )
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        b,
+                        color = Color.White,
+                        fontSize = if (b.length > 1) 9.sp else 11.sp,
+                        lineHeight = if (b.length > 1) 9.sp else 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         },
         selected = false,
