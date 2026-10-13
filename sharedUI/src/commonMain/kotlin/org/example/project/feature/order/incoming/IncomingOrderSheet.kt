@@ -23,7 +23,8 @@ fun IncomingOrderSheet(
     order: Order,
     onAccept: () -> Unit,
     onReject: () -> Unit,
-    onTimeout: () -> Unit
+    onTimeout: () -> Unit,
+    onViewDetails: (() -> Unit)? = null
 ) {
     ModalBottomSheet(
         onDismissRequest = {},
@@ -62,21 +63,35 @@ fun IncomingOrderSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OfferMeta("Earning", "\u09F3 ${order.earning}", Green)
+                OfferMeta("You earn", "\u09F3 ${order.earning}", Green)
                 OfferMeta("Items", "${order.items}")
                 StatusChip(
                     text = order.paymentType.label,
-                    color = if (order.paymentType == PaymentType.COD) Orange else Green
+                    color = if (order.paymentType.isCod) Orange else Green
                 )
             }
 
-            if (order.paymentType == PaymentType.COD) {
-                Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(10.dp))
+            if (order.paymentType.isCod) {
                 Text(
-                    "Collect \u09F3 ${order.collectAmount} from customer",
+                    "Collect \u09F3 ${order.collectAmount} from customer (Cash)",
                     color = GreyText,
-                    fontSize = 13.sp
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
+            } else {
+                Text(
+                    "No collection needed \u2022 Paid via ${order.paymentType.label}",
+                    color = Green,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            if (onViewDetails != null) {
+                TextButton(onClick = onViewDetails, modifier = Modifier.fillMaxWidth()) {
+                    Text("View full order details")
+                }
             }
 
             Spacer(Modifier.height(20.dp))

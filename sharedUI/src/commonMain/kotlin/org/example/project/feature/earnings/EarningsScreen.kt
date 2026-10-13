@@ -8,8 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,19 +19,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.components.AppCard
+import org.example.project.components.ScreenHeader
+import org.example.project.components.ScreenSpacing
+import org.example.project.components.SearchFilterIcon
+import org.example.project.components.SegmentIconCell
+import org.example.project.components.SegmentTextCell
+import org.example.project.components.SegmentedFilterBar
 import org.example.project.components.StatCard
 import org.example.project.model.DayEarning
+import org.example.project.model.RiderSession
 import org.example.project.model.SampleData
 import org.example.project.theme.*
-
-private val filters = listOf("Today", "This Week", "This Month")
 
 @Composable
 fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
     var tab by remember { mutableStateOf(1) }
     val week = SampleData.week
     val month = SampleData.month
-    val today = week[5]
+    // Today includes completed orders from this session:
+    // delivery earnings + tips added; COD cash tracked separately in Cash on hand.
+    val baseToday = week[5]
+    val today = baseToday.copy(
+        amount = baseToday.amount + RiderSession.sessionEarnings,
+        orders = baseToday.orders + RiderSession.sessionDeliveries
+    )
 
     // Draft selection (what the user picked in the fields, not yet applied)
     var draftStartIndex by remember { mutableStateOf<Int?>(null) }
@@ -72,7 +81,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
             if (hasAppliedFilter) {
                 val s = minOf(appliedStartIndex!!, appliedEndIndex!!)
                 val e = maxOf(appliedStartIndex!!, appliedEndIndex!!)
-                "${month[s].day} - ${month[e].day}"
+                "${month[s].fullDate} - ${month[e].fullDate}"
             } else {
                 "Custom range"
             }
@@ -82,55 +91,29 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
     // Results are visible for presets always; for custom only after Apply.
     val showResults = !isCustom || showCustomResults
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
-    ) {
-        Text("Earnings", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState())
-            ) {
-                filters.forEachIndexed { i, t ->
-                    FilterChip(
-                        selected = tab == i,
-                        onClick = { tab = i },
-                        label = { Text(t, maxLines = 1) }
-                    )
-                }
-            }
-            FilledTonalIconButton(
-                onClick = { tab = 3 },
-                colors = if (isCustom) {
-                    IconButtonDefaults.filledTonalIconButtonColors()
-                } else {
-                    IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        contentColor = GreyText
-                    )
-                },
-                modifier = Modifier.padding(start = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Custom date range"
+    Column(Modifier.fillMaxSize()) {
+        ScreenHeader(
+            title = "Earnings",
+            subtitle = "Track your income"
+        )
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = ScreenSpacing.sides,
+                    end = ScreenSpacing.sides,
+                    top = ScreenSpacing.belowHeader,
+                    bottom = ScreenSpacing.sides
                 )
-            }
-        }
+        ) {
+        FilterSegmentedBar(
+            selected = tab,
+            onSelect = { tab = it }
+        )
 
         if (isCustom) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ScreenSpacing.belowFilter))
             AppCard(
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -148,7 +131,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    draftStartIndex?.let { month[it].day } ?: "Select date",
+                                    draftStartIndex?.let { month[it].fullDate } ?: "Select date",
                                     maxLines = 1,
                                     color = if (draftStartIndex != null) Color.Unspecified else GreyText
                                 )
@@ -163,7 +146,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    draftEndIndex?.let { month[it].day } ?: "Select date",
+                                    draftEndIndex?.let { month[it].fullDate } ?: "Select date",
                                     maxLines = 1,
                                     color = if (draftEndIndex != null) Color.Unspecified else GreyText
                                 )
@@ -198,7 +181,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(ScreenSpacing.belowFilter))
 
         if (showResults) {
             Card(
@@ -214,6 +197,26 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
                     Spacer(Modifier.height(4.dp))
                     Text("৳ $total", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                     Text("$orders orders completed", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
+                }
+            }
+
+            if (RiderSession.sessionCashCollected > 0) {
+                Spacer(Modifier.height(12.dp))
+                AppCard(
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Cash collected today (COD)", color = GreyText, fontSize = 12.sp)
+                            Text(
+                                "\u09F3 ${RiderSession.sessionCashCollected} to deposit at branch",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Text("\uD83D\uDCB5", fontSize = 24.sp)
+                    }
                 }
             }
 
@@ -264,7 +267,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text(d.day, fontWeight = FontWeight.SemiBold)
+                                Text(d.fullDate, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                 Text("${d.orders} orders", color = GreyText, fontSize = 12.sp)
                             }
                             Text("৳ ${d.amount}", color = Green, fontWeight = FontWeight.Bold)
@@ -305,6 +308,7 @@ fun EarningsScreen(onOpen: (EarningsDestination) -> Unit = {}) {
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)
         ) { Text("Withdraw earnings", fontWeight = FontWeight.SemiBold) }
+        }
     }
 
     if (dateDialog != null) {
@@ -395,7 +399,7 @@ private fun CalendarPickerDialog(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    if (selectedIndex != null) "Selected: ${dates[selectedIndex].day}"
+                    if (selectedIndex != null) "Selected: ${dates[selectedIndex].fullDate}"
                     else "Tap a date to select it",
                     color = GreyText, fontSize = 12.sp
                 )
@@ -405,6 +409,29 @@ private fun CalendarPickerDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
+}
+
+@Composable
+private fun FilterSegmentedBar(
+    selected: Int,
+    onSelect: (Int) -> Unit
+) {
+    val labels = listOf("Today", "This Week", "This Month")
+    SegmentedFilterBar {
+        labels.forEachIndexed { i, label ->
+            SegmentTextCell(
+                label = label,
+                selected = selected == i,
+                onClick = { onSelect(i) }
+            )
+        }
+        // 4th equal section: Customise with custom search-style icon
+        SegmentIconCell(
+            selected = selected == 3,
+            onClick = { onSelect(3) },
+            icon = { tint -> SearchFilterIcon(tint = tint) }
+        )
+    }
 }
 
 @Composable

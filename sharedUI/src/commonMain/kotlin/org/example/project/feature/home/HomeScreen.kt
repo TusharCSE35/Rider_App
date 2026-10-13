@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 import org.example.project.components.AppCard
 import org.example.project.components.LocalToast
 import org.example.project.components.OrderCard
+import org.example.project.components.ScreenHeader
+import org.example.project.components.ScreenSpacing
 import org.example.project.components.StatCard
 import org.example.project.feature.drawer.AppDrawer
 import org.example.project.feature.drawer.DrawerDestination
@@ -45,6 +47,8 @@ import org.example.project.feature.rider.RiderDestination
 import org.example.project.feature.rider.RiderDestinationScreen
 import org.example.project.model.Order
 import org.example.project.model.OrderStatus
+import org.example.project.model.PaymentType
+import org.example.project.model.RiderSession
 import org.example.project.model.SampleData
 import org.example.project.theme.*
 
@@ -67,6 +71,8 @@ fun HomeScreen(onLogout: () -> Unit) {
     var currentOrder by remember { mutableStateOf<Order?>(null) }
     var incomingOffer by remember { mutableStateOf<Order?>(null) }
     var showDetails by remember { mutableStateOf(false) }
+    var showOfferDetails by remember { mutableStateOf(false) }
+    var ordersSelected by remember { mutableStateOf<Order?>(null) }
     var nextOrderId by remember { mutableStateOf(1043) }
     var unreadCount by remember { mutableStateOf(3) }
     var showPickupVerify by remember { mutableStateOf(false) }
@@ -83,9 +89,15 @@ fun HomeScreen(onLogout: () -> Unit) {
         val o = currentOrder ?: return
         val next = o.status.next()
         if (next == null || !next.isActive) {
+            // Order delivered: update daily earnings (fee + tip) and cash tracking (COD only).
+            RiderSession.complete(o)
             currentOrder = null
             showDetails = false
-            toast.success("Order ${o.id} completed")
+            if (o.paymentType.isCod) {
+                toast.success("Order ${o.id} completed • +\u09F3 ${o.riderPayout} earnings • Collected \u09F3 ${o.collectAmount} cash")
+            } else {
+                toast.success("Order ${o.id} completed • +\u09F3 ${o.riderPayout} earnings • No cash to collect")
+            }
         } else {
             currentOrder = o.copy(status = next)
             toast.info("Order ${o.id}: ${next.label}")
@@ -101,9 +113,19 @@ fun HomeScreen(onLogout: () -> Unit) {
     }
 
     LaunchedEffect(online, currentOrder, incomingOffer) {
-        if (online && currentOrder == null && incomingOffer == null) {
+        if (online && currentOrder == null && incomingOffer == null && !showOfferDetails) {
             delay(3000)
-            incomingOffer = SampleData.incomingOrder.copy(id = "#$nextOrderId", time = "Now")
+            val base = SampleData.incomingOrder
+            // Alternate COD / online so both flows can be tested.
+            val offer = if (nextOrderId % 2 == 0) {
+                base.copy(id = "#$nextOrderId", time = "Now", paymentType = PaymentType.COD, collectAmount = 580, tip = 0)
+            } else {
+                base.copy(
+                    id = "#$nextOrderId", time = "Now",
+                    paymentType = PaymentType.BKASH, collectAmount = 0, tip = 20
+                )
+            }
+            incomingOffer = offer
             nextOrderId++
         }
     }
@@ -135,6 +157,18 @@ fun HomeScreen(onLogout: () -> Unit) {
     val riderDest = riderScreen
     if (riderDest != null) {
         RiderDestinationScreen(destination = riderDest, onBack = { riderScreen = null })
+        return
+    }
+
+    val offerForDetails = incomingOffer
+    if (showOfferDetails && offerForDetails != null) {
+        OrderDetailsScreen(
+            order = offerForDetails,
+            onBack = { showOfferDetails = false },
+            onAdvance = { showOfferDetails = false },
+            onCancel = { showOfferDetails = false },
+            onViewMap = {}
+        )
         return
     }
 
@@ -188,6 +222,20 @@ fun HomeScreen(onLogout: () -> Unit) {
         }
         return
     }
+    // Order Details opened from the Orders module: rendered at the root (same as
+    // the Home path above) so its Scaffold is full-screen edge-to-edge and the
+    // theme-colored AppBar extends to the very top with no gap.
+    val selectedFromOrders = ordersSelected
+    if (selectedFromOrders != null) {
+        OrderDetailsScreen(
+            order = selectedFromOrders,
+            onBack = { ordersSelected = null },
+            onAdvance = { ordersSelected = null },
+            onCancel = { ordersSelected = null },
+            onViewMap = {}
+        )
+        return
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -221,11 +269,17 @@ fun HomeScreen(onLogout: () -> Unit) {
                 }
             }
         ) { inner ->
-            Box(Modifier.padding(inner)) {
+            // Only the bottom (navigation bar) inset is consumed here, so each
+            // tab's theme-colored header extends behind the status bar to the
+            // very top edge without a gap.
+            Box(Modifier.fillMaxSize().padding(bottom = inner.calculateBottomPadding())) {
                 when (selected) {
                     0 -> HomeTab(
                         online = online,
                         currentOrder = currentOrder,
+                        todayEarnings = 1250 + RiderSession.sessionEarnings,
+                        todayOrders = 8 + RiderSession.sessionDeliveries,
+                        cashCollected = RiderSession.sessionCashCollected,
                         unreadCount = unreadCount,
                         onNotificationClick = { drawerScreen = DrawerDestination.NOTIFICATIONS },
                         onOnlineChange = {
@@ -237,7 +291,10 @@ fun HomeScreen(onLogout: () -> Unit) {
                         onAvatarClick = { scope.launch { drawerState.open() } },
                         onSosClick = { showSos = true }
                     )
-                    1 -> OrdersScreen(activeOrder = currentOrder)
+                    1 -> OrdersScreen(
+                        activeOrder = currentOrder,
+                        onOrderClick = { ordersSelected = it }
+                    )
                     2 -> EarningsScreen(onOpen = { earningsScreen = it })
                     else -> ProfileScreen(onOpen = { riderScreen = it })
                 }
@@ -249,6 +306,7 @@ fun HomeScreen(onLogout: () -> Unit) {
         key(offer.id) {
             IncomingOrderSheet(
                 order = offer,
+                onViewDetails = { showOfferDetails = true },
                 onAccept = {
                     currentOrder = offer.copy(status = OrderStatus.ACCEPTED)
                     incomingOffer = null
@@ -271,6 +329,9 @@ fun HomeScreen(onLogout: () -> Unit) {
 private fun HomeTab(
     online: Boolean,
     currentOrder: Order?,
+    todayEarnings: Int = 1250,
+    todayOrders: Int = 8,
+    cashCollected: Int = 0,
     unreadCount: Int,
     onNotificationClick: () -> Unit,
     onOnlineChange: (Boolean) -> Unit,
@@ -279,66 +340,71 @@ private fun HomeTab(
     onAvatarClick: () -> Unit,
     onSosClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable { onAvatarClick() },
-                contentAlignment = Alignment.Center
-            ) { Text("\uD83E\uDDD1", fontSize = 24.sp) }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text("Hello, Rider \uD83D\uDC4B", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("Ready to deliver today?", color = GreyText, fontSize = 13.sp)
-            }
-            Box(modifier = Modifier.size(44.dp)) {
+    Column(Modifier.fillMaxSize()) {
+        ScreenHeader(
+            title = "Hello, Rider \uD83D\uDC4B",
+            subtitle = "Ready to deliver today?",
+            leading = {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .clickable { onNotificationClick() },
+                        .background(Color.White)
+                        .clickable { onAvatarClick() },
                     contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Notifications,
-                        contentDescription = "Notifications",
-                        tint = DarkText,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-                if (unreadCount > 0) {
+                ) { Text("\uD83E\uDDD1", fontSize = 24.sp) }
+            },
+            actions = {
+                Box(modifier = Modifier.size(44.dp)) {
                     Box(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = (-5).dp, y = 4.dp)
-                            .size(16.dp)
+                            .align(Alignment.Center)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .clickable { onNotificationClick() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                            color = Color.White,
-                            fontSize = if (unreadCount > 9) 8.sp else 10.sp,
-                            lineHeight = if (unreadCount > 9) 8.sp else 10.sp,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
                         )
+                    }
+                    if (unreadCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-5).dp, y = 4.dp)
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = if (unreadCount > 9) 8.sp else 10.sp,
+                                lineHeight = if (unreadCount > 9) 8.sp else 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
-        }
+        )
 
-        Spacer(Modifier.height(20.dp))
-
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = ScreenSpacing.sides,
+                    end = ScreenSpacing.sides,
+                    top = ScreenSpacing.belowHeader,
+                    bottom = ScreenSpacing.sides
+                )
+        ) {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = if (online) Green else Color(0xFF3A3A3A)),
@@ -370,8 +436,27 @@ private fun HomeTab(
         Spacer(Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatCard("Earnings", "\u09F3 1,250", "\uD83D\uDCB0", Modifier.weight(1f))
-            StatCard("Orders", "8", "\uD83D\uDCE6", Modifier.weight(1f))
+            StatCard("Earnings", "\u09F3 $todayEarnings", "\uD83D\uDCB0", Modifier.weight(1f))
+            StatCard("Orders", "$todayOrders", "\uD83D\uDCE6", Modifier.weight(1f))
+        }
+        if (cashCollected > 0) {
+            Spacer(Modifier.height(12.dp))
+            AppCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Cash collected today", color = GreyText, fontSize = 12.sp)
+                        Text(
+                            "\u09F3 $cashCollected to deposit at branch",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+                    Text("\uD83D\uDCB5", fontSize = 24.sp)
+                }
+            }
         }
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -408,5 +493,6 @@ private fun HomeTab(
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD93025)),
             modifier = Modifier.fillMaxWidth().height(48.dp)
         ) { Text("\uD83C\uDD98  Emergency / SOS", fontWeight = FontWeight.SemiBold) }
+        }
     }
 }

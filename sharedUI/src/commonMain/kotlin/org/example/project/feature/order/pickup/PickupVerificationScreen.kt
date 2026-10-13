@@ -35,7 +35,7 @@ fun PickupVerificationScreen(
         Spacer(Modifier.height(20.dp))
         SectionLabel("Order code")
         Text(
-            "Write to code that receved from Restaurant.",
+            "Enter the 4-digit code from the restaurant. (Testing mode: any 4-digit code works.)",
             color = GreyText, fontSize = 13.sp
         )
         Spacer(Modifier.height(12.dp))
@@ -49,7 +49,8 @@ fun PickupVerificationScreen(
         Spacer(Modifier.height(24.dp))
         Button(
             onClick = {
-                if (code == order.pickupCode) onVerified() else error = true
+                // TEMPORARY testing behaviour: accept any 4-digit code.
+                if (code.length == 4 && code.all { it.isDigit() }) onVerified() else error = true
             },
             enabled = code.length == 4,
             shape = RoundedCornerShape(14.dp),
