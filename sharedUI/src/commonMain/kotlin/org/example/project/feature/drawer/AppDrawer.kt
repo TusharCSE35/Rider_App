@@ -48,6 +48,10 @@ fun AppDrawer(
                     "Tushar Sarkar", color = Color.White, fontSize = 18.sp,
                     fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
+                Text(
+                    "rider@example.com", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
                 Text("+880 1700 000000", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
                 Spacer(Modifier.height(4.dp))
                 Text("\u2B50 4.8  \u2022  Motorcycle", color = Color.White, fontSize = 13.sp)

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.model.Order
 import org.example.project.model.OrderStatus
+import org.example.project.model.PaymentType
 import org.example.project.theme.*
 
 @Composable
@@ -59,16 +60,61 @@ fun OrderCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            AddressRow("\uD83C\uDFEA", "Pickup", order.pickupAddress)
+            AddressRow("🏪", "Pickup", order.pickupAddress)
             Spacer(Modifier.height(8.dp))
-            AddressRow("\uD83D\uDCCD", "Drop \u2022 ${order.customer}", order.dropAddress)
+            AddressRow("📍", "Drop • ${order.customer}", order.dropAddress)
+
+            Spacer(Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (order.paymentType.isCod) Orange.copy(alpha = 0.10f)
+                        else Green.copy(alpha = 0.10f)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                StatusChip(
+                    order.paymentType.label,
+                    if (order.paymentType.isCod) Orange else Green
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    if (order.paymentType.isCod) {
+                        Text(
+                            "Collect ৳ ${order.collectAmount}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                        Text("Cash on delivery", color = GreyText, fontSize = 11.sp)
+                    } else {
+                        Text(
+                            "No collection needed",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                        Text("Paid ${order.paymentType.label}", color = GreyText, fontSize = 11.sp)
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("You earn", color = GreyText, fontSize = 11.sp)
+                    Text(
+                        "৳ ${order.earning}",
+                        color = Green,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Meta("Distance", "${order.distanceKm} km")
                 Meta("Items", "${order.items}")
-                Meta("Earning", "\u09F3 ${order.earning}", valueColor = Green)
+                Meta("You earn", "৳ ${order.earning}", valueColor = Green)
             }
 
             val label = order.status.actionLabel

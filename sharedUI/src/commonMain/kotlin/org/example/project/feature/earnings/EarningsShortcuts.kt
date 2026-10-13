@@ -15,9 +15,10 @@ import org.example.project.theme.*
 
 @Composable
 fun EarningsShortcuts(onOpen: (EarningsDestination) -> Unit) {
+    val items = EarningsDestination.entries.filter { it != EarningsDestination.WITHDRAW }
     ContentCard {
         Column(Modifier.fillMaxWidth()) {
-            EarningsDestination.entries.forEachIndexed { i, d ->
+            items.forEachIndexed { i, d ->
                 if (i > 0) HorizontalDivider()
                 Row(
                     Modifier.fillMaxWidth().clickable { onOpen(d) }.padding(16.dp),

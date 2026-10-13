@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.components.*
+import org.example.project.model.RiderSession
 import org.example.project.model.SampleData
 import org.example.project.theme.*
 
@@ -18,8 +19,14 @@ import org.example.project.theme.*
 fun CashTrackingScreen(onBack: () -> Unit) {
     val toast = LocalToast.current
     val summary = SampleData.cashSummary
-    var cashInHand by remember { mutableStateOf(summary.cashInHand) }
-    var entries by remember { mutableStateOf(summary.entries) }
+    val sessionCash = RiderSession.sessionCashCollected
+    val sessionEntries = RiderSession.cashEntries()
+    val baseCash = summary.cashInHand
+    val baseEntries = summary.entries
+    var deposited by remember { mutableStateOf(false) }
+    val cashInHand = if (deposited) 0 else baseCash + sessionCash
+    val entries = if (deposited) emptyList() else baseEntries + sessionEntries
+    val totalCollectedToday = baseCash + sessionCash
     var confirm by remember { mutableStateOf(false) }
 
     val ratio = cashInHand / summary.limit.toFloat()
@@ -36,6 +43,40 @@ fun CashTrackingScreen(onBack: () -> Unit) {
         if (ratio >= 0.8f) {
             Spacer(Modifier.height(8.dp))
             Text("You're approaching the limit. Please deposit the cash as soon as possible.", color = Color(0xFFD93025), fontSize = 13.sp)
+        }
+
+        Spacer(Modifier.height(12.dp))
+        ContentCard {
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Total cash collected today", color = GreyText, fontSize = 12.sp)
+                    Text(
+                        "\u09F3 $totalCollectedToday",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Deposit due at branch", color = GreyText, fontSize = 12.sp)
+                    Text(
+                        "\u09F3 $cashInHand",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Orange
+                    )
+                }
+            }
+        }
+        if (sessionCash > 0 && !deposited) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Includes \u09F3 $sessionCash collected from ${sessionEntries.size} COD order(s) completed today.",
+                color = GreyText,
+                fontSize = 12.sp
+            )
         }
 
         Spacer(Modifier.height(20.dp))
@@ -76,8 +117,7 @@ fun CashTrackingScreen(onBack: () -> Unit) {
                 TextButton(onClick = {
                     confirm = false
                     toast.success("\u09F3 $cashInHand deposit request has been sent")
-                    cashInHand = 0
-                    entries = emptyList()
+                    deposited = true
                 }) { Text("Confirm") }
             },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } }
