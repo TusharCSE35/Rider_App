@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.sp
 import org.example.project.components.ContentCard
 import org.example.project.components.ScreenScaffold
 import org.example.project.components.SectionLabel
+import org.example.project.components.OrderStatusProgress
 import org.example.project.components.StatusChip
 import org.example.project.components.statusColor
 import org.example.project.core.platform.rememberDialer
@@ -43,6 +44,9 @@ fun OrderDetailsScreen(
                 StatusChip(order.status.label, statusColor(order.status))
             }
         }
+        Spacer(Modifier.height(12.dp))
+        SectionLabel("Order progress")
+        OrderStatusProgress(status = order.status)
         Spacer(Modifier.height(12.dp))
         OutlinedButton(
             onClick = onViewMap,
@@ -110,24 +114,52 @@ fun OrderDetailsScreen(
         SectionLabel("Payment")
         ContentCard {
             Column(Modifier.padding(16.dp)) {
-                PaymentRow("Payment type") {
+                PaymentRow("Payment method") {
                     StatusChip(
                         order.paymentType.label,
-                        if (order.paymentType == PaymentType.COD) Orange else Green
+                        if (order.paymentType.isCod) Orange else Green
                     )
                 }
                 HorizontalDivider(Modifier.padding(vertical = 10.dp))
-                PaymentRow("Collect from customer") {
+                PaymentRow("Customer total") {
                     Text(
-                        if (order.paymentType == PaymentType.COD) "\u09F3 ${order.collectAmount}" else "\u09F3 0",
+                        if (order.paymentType.isCod) "\u09F3 ${order.collectAmount}" else "Paid online",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
                 }
                 HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                PaymentRow("Collect from customer") {
+                    Text(
+                        "\u09F3 ${order.customerPayable}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (order.requiresCollection) Orange else GreyText
+                    )
+                }
+                if (order.tip > 0) {
+                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                    PaymentRow("Tip") {
+                        Text("\u09F3 ${order.tip}", color = Green, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    }
+                }
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
                 PaymentRow("Your earning") {
                     Text("\u09F3 ${order.earning}", color = Green, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                PaymentRow("Added to earnings") {
+                    Text("\u09F3 ${order.riderPayout}", color = Green, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (order.paymentType.isCod)
+                        "Collect \u09F3 ${order.collectAmount} in cash. \u09F3 ${order.riderPayout} (fee + tip) will be added to your daily earnings."
+                    else
+                        "No cash to collect. Customer paid via ${order.paymentType.label}. \u09F3 ${order.riderPayout} (fee + tip) will be added to your daily earnings.",
+                    color = GreyText,
+                    fontSize = 12.sp
+                )
             }
         }
 

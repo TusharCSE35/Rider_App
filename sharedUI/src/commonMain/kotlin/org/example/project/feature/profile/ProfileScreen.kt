@@ -33,6 +33,7 @@ fun ProfileScreen(onOpen: (RiderDestination) -> Unit = {}) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                 .background(MaterialTheme.colorScheme.primary)
+                .statusBarsPadding()
                 .padding(vertical = 28.dp),
             contentAlignment = Alignment.Center
         ) {

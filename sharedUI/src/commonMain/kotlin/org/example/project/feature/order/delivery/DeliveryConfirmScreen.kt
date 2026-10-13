@@ -37,6 +37,19 @@ fun DeliveryConfirmScreen(
             }
         }
 
+        if (!isCod) {
+            Spacer(Modifier.height(20.dp))
+            SectionLabel("Payment")
+            ContentCard {
+                Text(
+                    "No cash to collect. Customer paid via ${order.paymentType.label}. Only \u09F3 ${order.riderPayout} (fee + tip) will be added to your earnings.",
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 14.sp,
+                    color = GreyText
+                )
+            }
+        }
+
         if (isCod) {
             Spacer(Modifier.height(20.dp))
             SectionLabel("Cash collection")

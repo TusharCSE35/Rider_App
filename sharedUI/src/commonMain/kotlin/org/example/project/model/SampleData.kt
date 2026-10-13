@@ -31,30 +31,65 @@ object SampleData {
     )
 
     val orders = listOf(
-        Order("#1041", "Pizza Roma", "Karim Hossain", "Gulshan 1", "Banani Block C", 2, 4.1, 110, "Today, 1:10 PM", OrderStatus.DELIVERED),
-        Order("#1040", "Burger Hub", "Sadia Islam", "Uttara Sector 7", "Uttara Sector 11", 4, 2.2, 70, "Today, 12:20 PM", OrderStatus.DELIVERED),
-        Order("#1039", "Biryani House", "Nasir Ahmed", "Mirpur 10", "Mirpur 12", 1, 1.8, 60, "Today, 11:05 AM", OrderStatus.CANCELLED),
-        Order("#1038", "Sushi Zone", "Tania Akter", "Banani 11", "Gulshan 2", 2, 3.0, 95, "Yesterday, 8:40 PM", OrderStatus.DELIVERED),
-        Order("#1037", "Chai & Snacks", "Mamun Khan", "Farmgate", "Tejgaon", 5, 1.5, 55, "Yesterday, 6:15 PM", OrderStatus.DELIVERED),
-        Order("#1036", "Kacchi Bhai", "Rony Das", "Old Dhaka", "Motijheel", 2, 5.2, 130, "Yesterday, 2:30 PM", OrderStatus.CANCELLED)
+        Order(
+            "#1041", "Pizza Roma", "Karim Hossain", "Gulshan 1", "Banani Block C", 2, 4.1, 110,
+            "Today, 1:10 PM", OrderStatus.DELIVERED,
+            itemList = listOf(OrderItem("Chicken Pizza 12\"", 1, 450), OrderItem("Garlic Bread", 1, 170)),
+            paymentType = PaymentType.COD, collectAmount = 620, tip = 20
+        ),
+        Order(
+            "#1040", "Burger Hub", "Sadia Islam", "Uttara Sector 7", "Uttara Sector 11", 4, 2.2, 70,
+            "Today, 12:20 PM", OrderStatus.DELIVERED,
+            itemList = listOf(OrderItem("Beef Burger", 2, 220), OrderItem("Fries", 2, 90)),
+            paymentType = PaymentType.BKASH, collectAmount = 0, tip = 0
+        ),
+        Order(
+            "#1039", "Biryani House", "Nasir Ahmed", "Mirpur 10", "Mirpur 12", 1, 1.8, 60,
+            "Today, 11:05 AM", OrderStatus.CANCELLED,
+            itemList = listOf(OrderItem("Chicken Biryani", 1, 180)),
+            paymentType = PaymentType.COD, collectAmount = 180, tip = 0
+        ),
+        Order(
+            "#1038", "Sushi Zone", "Tania Akter", "Banani 11", "Gulshan 2", 2, 3.0, 95,
+            "Yesterday, 8:40 PM", OrderStatus.DELIVERED,
+            itemList = listOf(OrderItem("Salmon Roll", 1, 520), OrderItem("Miso Soup", 1, 250)),
+            paymentType = PaymentType.COD, collectAmount = 770, tip = 30
+        ),
+        Order(
+            "#1037", "Chai & Snacks", "Mamun Khan", "Farmgate", "Tejgaon", 5, 1.5, 55,
+            "Yesterday, 6:15 PM", OrderStatus.DELIVERED,
+            itemList = listOf(OrderItem("Milk Tea", 3, 40), OrderItem("Samosa", 2, 30)),
+            paymentType = PaymentType.BANK, collectAmount = 0, tip = 0
+        ),
+        Order(
+            "#1036", "Kacchi Bhai", "Rony Das", "Old Dhaka", "Motijheel", 2, 5.2, 130,
+            "Yesterday, 2:30 PM", OrderStatus.CANCELLED,
+            itemList = listOf(OrderItem("Kacchi Platter", 2, 260)),
+            paymentType = PaymentType.PAID, collectAmount = 0, tip = 0
+        )
     )
 
     val week = listOf(
-        DayEarning("Sat", 980, 7), DayEarning("Sun", 1420, 10), DayEarning("Mon", 760, 5),
-        DayEarning("Tue", 1180, 8), DayEarning("Wed", 1530, 11), DayEarning("Thu", 1250, 8),
-        DayEarning("Fri", 1890, 13)
+        DayEarning("Sat", 980, 7, "Sat, Oct 4, 2026"), DayEarning("Sun", 1420, 10, "Sun, Oct 5, 2026"),
+        DayEarning("Mon", 760, 5, "Mon, Oct 6, 2026"), DayEarning("Tue", 1180, 8, "Tue, Oct 7, 2026"),
+        DayEarning("Wed", 1530, 11, "Wed, Oct 8, 2026"), DayEarning("Thu", 1250, 8, "Thu, Oct 9, 2026"),
+        DayEarning("Fri", 1890, 13, "Fri, Oct 10, 2026")
     )
 
     // This month = 23 earlier days + current week (last 7 days), so week totals stay consistent.
     val month = listOf(
-        DayEarning("Sep 13", 1120, 8), DayEarning("Sep 14", 1350, 9), DayEarning("Sep 15", 890, 6),
-        DayEarning("Sep 16", 1640, 12), DayEarning("Sep 17", 1020, 7), DayEarning("Sep 18", 1490, 10),
-        DayEarning("Sep 19", 870, 6), DayEarning("Sep 20", 1310, 9), DayEarning("Sep 21", 990, 7),
-        DayEarning("Sep 22", 1580, 11), DayEarning("Sep 23", 1090, 8), DayEarning("Sep 24", 1420, 10),
-        DayEarning("Sep 25", 940, 6), DayEarning("Sep 26", 1710, 12), DayEarning("Sep 27", 1180, 8),
-        DayEarning("Sep 28", 1290, 9), DayEarning("Sep 29", 1050, 7), DayEarning("Sep 30", 1470, 10),
-        DayEarning("Oct 1", 920, 6), DayEarning("Oct 2", 1610, 11), DayEarning("Oct 3", 1140, 8),
-        DayEarning("Oct 4", 1380, 9), DayEarning("Oct 5", 990, 7)
+        DayEarning("Sep 13", 1120, 8, "Sep 13, 2026"), DayEarning("Sep 14", 1350, 9, "Sep 14, 2026"),
+        DayEarning("Sep 15", 890, 6, "Sep 15, 2026"), DayEarning("Sep 16", 1640, 12, "Sep 16, 2026"),
+        DayEarning("Sep 17", 1020, 7, "Sep 17, 2026"), DayEarning("Sep 18", 1490, 10, "Sep 18, 2026"),
+        DayEarning("Sep 19", 870, 6, "Sep 19, 2026"), DayEarning("Sep 20", 1310, 9, "Sep 20, 2026"),
+        DayEarning("Sep 21", 990, 7, "Sep 21, 2026"), DayEarning("Sep 22", 1580, 11, "Sep 22, 2026"),
+        DayEarning("Sep 23", 1090, 8, "Sep 23, 2026"), DayEarning("Sep 24", 1420, 10, "Sep 24, 2026"),
+        DayEarning("Sep 25", 940, 6, "Sep 25, 2026"), DayEarning("Sep 26", 1710, 12, "Sep 26, 2026"),
+        DayEarning("Sep 27", 1180, 8, "Sep 27, 2026"), DayEarning("Sep 28", 1290, 9, "Sep 28, 2026"),
+        DayEarning("Sep 29", 1050, 7, "Sep 29, 2026"), DayEarning("Sep 30", 1470, 10, "Sep 30, 2026"),
+        DayEarning("Oct 1", 920, 6, "Oct 1, 2026"), DayEarning("Oct 2", 1610, 11, "Oct 2, 2026"),
+        DayEarning("Oct 3", 1140, 8, "Oct 3, 2026"), DayEarning("Oct 4", 1380, 9, "Oct 4, 2026"),
+        DayEarning("Oct 5", 990, 7, "Oct 5, 2026")
     ) + week
 
     const val walletBalance = 3450

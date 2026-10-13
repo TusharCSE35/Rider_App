@@ -11,6 +11,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.components.OrderCard
+import org.example.project.components.ScreenHeader
+import org.example.project.components.ScreenSpacing
+import org.example.project.components.SegmentTextCell
+import org.example.project.components.SegmentedFilterBar
 import org.example.project.model.Order
 import org.example.project.model.OrderStatus
 import org.example.project.model.SampleData
@@ -19,7 +23,10 @@ import org.example.project.theme.GreyText
 private val filters = listOf("Active", "Completed", "Cancelled")
 
 @Composable
-fun OrdersScreen(activeOrder: Order? = null) {
+fun OrdersScreen(
+    activeOrder: Order? = null,
+    onOrderClick: (Order) -> Unit = {}
+) {
     var tab by remember { mutableStateOf(0) }
 
     val list = when (tab) {
@@ -29,25 +36,24 @@ fun OrdersScreen(activeOrder: Order? = null) {
     }
 
     Column(Modifier.fillMaxSize()) {
-        Text(
-            "My Orders",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 12.dp)
+        ScreenHeader(
+            title = "My Orders",
+            subtitle = "Track and manage your deliveries"
         )
+        Spacer(Modifier.height(ScreenSpacing.belowHeader))
 
-        TabRow(
-            selectedTabIndex = tab,
-            containerColor = MaterialTheme.colorScheme.background
-        ) {
-            filters.forEachIndexed { i, title ->
-                Tab(
-                    selected = tab == i,
-                    onClick = { tab = i },
-                    text = { Text(title, fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal) }
-                )
+        Box(Modifier.fillMaxWidth().padding(horizontal = ScreenSpacing.sides)) {
+            SegmentedFilterBar {
+                filters.forEachIndexed { i, title ->
+                    SegmentTextCell(
+                        label = title,
+                        selected = tab == i,
+                        onClick = { tab = i }
+                    )
+                }
             }
         }
+        Spacer(Modifier.height(ScreenSpacing.belowFilter))
 
         if (list.isEmpty()) {
             Column(
@@ -65,10 +71,17 @@ fun OrdersScreen(activeOrder: Order? = null) {
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(20.dp),
+                contentPadding = PaddingValues(
+                    start = ScreenSpacing.sides,
+                    end = ScreenSpacing.sides,
+                    top = 0.dp,
+                    bottom = ScreenSpacing.sides
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(list, key = { it.id }) { OrderCard(it) }
+                items(list, key = { it.id }) { order ->
+                    OrderCard(order = order, onClick = { onOrderClick(order) })
+                }
             }
         }
     }
